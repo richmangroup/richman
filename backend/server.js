@@ -5,6 +5,9 @@ import cors from "cors";
 import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import SupportRequest from "./models/SupportRequest.js";
+import authRoutes from "./routes/authRoutes.js";
+
+
 
 // ✅ For socket.io
 import http from "http";
@@ -19,6 +22,8 @@ const io = new Server(server, {
   cors: { origin: "*" },
 });
 
+
+
 // ✅ Middlewares
 app.use(cors());
 app.use(express.json());
@@ -27,6 +32,9 @@ app.use("/uploads", express.static("uploads"));
 // ✅ Routes
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/auth", authRoutes);
+
+
 
 // ✅ Save Support Requests
 app.post("/api/support-request", async (req, res) => {
@@ -59,3 +67,5 @@ mongoose
     );
   })
   .catch((err) => console.error("MongoDB connection error:", err));
+
+  
