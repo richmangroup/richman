@@ -8,6 +8,7 @@ import SupportRequest from "./models/SupportRequest.js";
 import authRoutes from "./routes/authRoutes.js";
 
 
+
 // ✅ For socket.io
 import http from "http";
 import { Server } from "socket.io";
@@ -31,7 +32,8 @@ app.use("/uploads", express.static("uploads"));
 // ✅ Routes
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/auth", authRoutes); // ✅ this MUST exist
+app.use("/api/auth", authRoutes);
+
 
 
 // ✅ Save Support Requests
