@@ -24,6 +24,11 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
+// ✅ Root Route (Add this to fix the issue)
+app.get("/", (req, res) => {
+  res.send("Backend is working! 🚀");
+});
+
 // ✅ Routes
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
