@@ -66,7 +66,7 @@ function Login() {
     e.preventDefault();
     playClickSound();
     try {
-      const res = await axios.post('http://localhost:5000/api/users/login', { email, password });
+      const res = await axios.post('/login', { email, password });
 
       // ✅ Save token and user in localStorage
       const userData = res.data.user || {};
