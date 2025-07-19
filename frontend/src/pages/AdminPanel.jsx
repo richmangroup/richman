@@ -2,15 +2,16 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import homeBg from '../assets/home-bg.jpg';
 import { motion } from 'framer-motion';
-import { FaSearch, FaFileCsv } from 'react-icons/fa';
+import { FaSearch, FaFileCsv, FaArrowLeft } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 function AdminPanel() {
   const [deposits, setDeposits] = useState([]);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const depositsPerPage = 5;
+  const navigate = useNavigate();
 
-  // Fetch all deposits
   useEffect(() => {
     const fetchDeposits = async () => {
       try {
@@ -27,20 +28,17 @@ function AdminPanel() {
     fetchDeposits();
   }, []);
 
-  // Filter by search
   const filteredDeposits = deposits.filter(d =>
     d.user?.username?.toLowerCase().includes(search.toLowerCase()) ||
     d.user?.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Paginated results
   const totalPages = Math.ceil(filteredDeposits.length / depositsPerPage);
   const currentDeposits = filteredDeposits.slice(
     (currentPage - 1) * depositsPerPage,
     currentPage * depositsPerPage
   );
 
-  // CSV Export
   const exportCSV = () => {
     const headers = ['Username', 'Email', 'Amount', 'Coin', 'TxID', 'Status', 'ReviewedBy'];
     const rows = deposits.map(d => [
@@ -61,7 +59,6 @@ function AdminPanel() {
     link.download = 'crypto_deposits.csv';
     link.click();
   };
-
   return (
     <div
       className="min-h-screen bg-cover bg-center relative p-6"
@@ -75,9 +72,16 @@ function AdminPanel() {
         transition={{ duration: 0.9 }}
         className="relative z-10 max-w-6xl mx-auto bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-lg"
       >
+        {/* Back Button */}
+        <button
+          onClick={() => navigate('/home')}
+          className="mb-6 flex items-center gap-2 text-sm text-pink-400 hover:text-white transition"
+        >
+          <FaArrowLeft /> Back to Home
+        </button>
+
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-white">Admin Panel</h2>
-
           <div className="flex gap-2">
             <button
               onClick={exportCSV}

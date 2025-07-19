@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from '../axios'; // ✅ Yeh aapki custom axios instance hai
+import axios from '../axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import loginBg from '../assets/login-bg.jpg';
@@ -67,15 +67,10 @@ function Login() {
     playClickSound();
     try {
       const res = await axios.post('/login', { email, password });
-
-      // ✅ Save token and user in localStorage
       const userData = res.data.user || {};
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(userData));
-
       showToastMessage('✅ Login successful!');
-
-      // ✅ Redirect based on role
       const isAdmin = userData?.isAdmin === true;
       setTimeout(() => navigate(isAdmin ? '/admin' : '/home'), 2000);
     } catch (err) {
@@ -104,23 +99,29 @@ function Login() {
         <div className="w-full h-full bg-black bg-opacity-60 backdrop-blur-sm"></div>
       </div>
 
-      <div className="flex w-full min-h-screen">
-        <div className="w-3/5 z-10 flex items-center px-24 text-white">
-          <div className="backdrop-blur-lg bg-white/10 border border-white/20 w-full p-12 rounded-2xl shadow-lg">
+      <div className="flex flex-col lg:flex-row w-full min-h-screen p-4 gap-6">
+        {/* Quote Block */}
+        <div className="lg:w-3/5 w-full flex items-center justify-center text-white">
+          <div className="backdrop-blur-lg bg-white/10 border border-white/20 w-full max-w-3xl p-6 md:p-12 rounded-2xl shadow-lg">
             <p className="text-sm mb-4 opacity-80">A WISE QUOTE</p>
-            <h1 className="text-7xl font-extrabold leading-tight mb-6 whitespace-pre-line">{quote}</h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-6 whitespace-pre-line">
+              {quote}
+            </h1>
             <p className="text-sm opacity-70">
               You can get everything you want if you work hard, trust the process, and stick to the plan.
             </p>
           </div>
         </div>
 
-        <div className="w-2/5 flex items-center justify-center px-10">
-          <div className="w-full max-w-md backdrop-blur-lg bg-white/10 border border-white/20 p-8 rounded-2xl shadow-xl">
-            <h2 className="text-3xl font-semibold text-white mb-2">Welcome Back</h2>
-            <p className="text-white/70 mb-6">Enter your email and password to access your account</p>
+        {/* Login Form */}
+        <div className="lg:w-2/5 w-full flex items-center justify-center">
+          <div className="w-full max-w-md backdrop-blur-lg bg-white/10 border border-white/20 p-6 md:p-8 rounded-2xl shadow-xl">
+            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-2">Welcome Back</h2>
+            <p className="text-white/70 mb-6 text-sm md:text-base">
+              Enter your email and password to access your account
+            </p>
 
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form onSubmit={handleLogin} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-white">Email</label>
                 <input
@@ -159,7 +160,11 @@ function Login() {
                 onMouseEnter={playHoverSound}
                 className="w-full py-2 px-4 border border-white/30 text-white font-semibold rounded-md flex items-center justify-center hover:bg-white/10 transition"
               >
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 mr-2" />
+                <img
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="Google"
+                  className="w-5 h-5 mr-2"
+                />
                 Sign In with Google
               </button>
 
@@ -174,6 +179,7 @@ function Login() {
         </div>
       </div>
 
+      {/* Toast Animation */}
       <AnimatePresence>
         {showToast && (
           <motion.div

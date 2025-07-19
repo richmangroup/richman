@@ -1,9 +1,10 @@
-import User from "../models/user.js";
 import { hash, compare } from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import path from "path";
+import CryptoDeposit from '../models/CryptoDeposit.js';
+import User from '../models/user.js';
 
 // ========================= REGISTER =========================
 export const registerUser = async (req, res) => {
@@ -115,22 +116,33 @@ const WALLET_ADDRESSES = {
 };
 
 export const submitCryptoDeposit = async (req, res) => {
-  const { coin, amount, txId } = req.body;
-  const userId = req.user.id;
+  try {
+    const { amount, coin, txId } = req.body;
 
-  if (!coin || !amount || !txId) {
-    return res.status(400).json({ message: "All fields are required (coin, amount, txId)." });
+    if (!amount || !coin || !txId) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Create a new deposit and mark it as approved immediately
+    const newDeposit = await CryptoDeposit.create({
+      userId: req.user._id,
+      amount,
+      coin: coin.toUpperCase(),
+      txId,
+      status: 'approved',
+      reviewedBy: 'system' // Optional: system auto-approved
+    });
+
+    // Update user's balance immediately
+    const user = await User.findById(req.user._id);
+    user.balance += parseFloat(amount);
+    await user.save();
+
+    res.status(201).json({ message: "Deposit submitted and auto-approved ✅", newBalance: user.balance });
+  } catch (err) {
+    console.error("Deposit error:", err);
+    res.status(500).json({ message: "Server error" });
   }
-
-  if (!WALLET_ADDRESSES[coin.toLowerCase()]) {
-    return res.status(400).json({ message: "Unsupported coin type." });
-  }
-
-  pendingDeposits.push({ userId, coin, amount, txId });
-  res.status(200).json({
-    message: "Crypto deposit submitted for verification.",
-    sendToAddress: WALLET_ADDRESSES[coin.toLowerCase()]
-  });
 };
 
 export const verifyCryptoDeposit = async (req, res) => {

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import path from "path";
+import CryptoDeposit from '../models/CryptoDeposit.js';
 
 // ========================= REGISTER =========================
 export const registerUser = async (req, res) => {
@@ -59,16 +60,12 @@ export const loginUser = async (req, res) => {
     delete user.password;
 
     res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        _id: user._id,
-        email: user.email,
-        username: user.username || "",
-        profilePic: user.profilePic || "",
-        isAdmin: user.isAdmin || false,
-        balance: user.balance || 0,
-      },
+      id: user._id,
+      email: user.email,
+      username: user.username || "",
+      profilePic: user.profilePic || "",
+      balance: user.balance || 0,
+      totalDeposited: user.totalDeposited || 0
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -106,7 +103,6 @@ export const depositFunds = async (req, res) => {
 };
 
 // ========================= CRYPTO DEPOSIT =========================
-let pendingDeposits = [];
 
 const WALLET_ADDRESSES = {
   usdt: "TYyeJuVT6WAJ62zANYDiZkaXfMMc8UCcML",
@@ -114,53 +110,83 @@ const WALLET_ADDRESSES = {
   btc: "bc1qhegxttdq2qzc79cks073rpna32mnl5tz3ejrs8"
 };
 
+// ========================= CRYPTO DEPOSIT (Auto Approved) =========================
 export const submitCryptoDeposit = async (req, res) => {
-  const { coin, amount, txId } = req.body;
-  const userId = req.user.id;
+  try {
+    const { coin, amount, txId } = req.body;
+    const userId = req.user.id;
 
-  if (!coin || !amount || !txId) {
-    return res.status(400).json({ message: "All fields are required (coin, amount, txId)." });
+    if (!coin || !amount || !txId) {
+      return res.status(400).json({ message: "All fields are required (coin, amount, txId)." });
+    }
+
+    // Save deposit to DB with status "approved"
+    const deposit = await CryptoDeposit.create({
+      userId,
+      coin: coin.toUpperCase(),
+      amount,
+      txId,
+      status: 'approved',
+      reviewedBy: 'system'
+    });
+
+    // Update user's balance
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.balance += parseFloat(amount);
+    user.totalDeposited += parseFloat(amount);
+    await user.save();
+
+    res.status(200).json({
+      message: "Crypto deposit submitted and auto-approved ✅",
+      newBalance: user.balance
+    });
+  } catch (err) {
+    console.error("submitCryptoDeposit error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
-
-  if (!WALLET_ADDRESSES[coin.toLowerCase()]) {
-    return res.status(400).json({ message: "Unsupported coin type." });
-  }
-
-  pendingDeposits.push({ userId, coin, amount, txId });
-  res.status(200).json({
-    message: "Crypto deposit submitted for verification.",
-    sendToAddress: WALLET_ADDRESSES[coin.toLowerCase()]
-  });
 };
 
 export const verifyCryptoDeposit = async (req, res) => {
-  const { txId } = req.body;
-  const userId = req.user.id;
+  try {
+    const { txId } = req.body;
+    const userId = req.user.id;
 
-  const index = pendingDeposits.findIndex(dep => dep.txId === txId && dep.userId === userId);
+    // Find the deposit with status pending
+    const deposit = await CryptoDeposit.findOne({ txId, userId, status: 'pending' });
 
-  if (index === -1) {
-    return res.status(404).json({ message: "Transaction not found or not pending." });
+    if (!deposit) {
+      return res.status(404).json({ message: "Pending deposit not found." });
+    }
+
+    // Approve deposit
+    deposit.status = 'approved';
+    deposit.reviewedBy = 'system';
+    await deposit.save();
+
+    // Update user's balance
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    user.balance += parseFloat(deposit.amount);
+    user.totalDeposited += parseFloat(deposit.amount);
+    await user.save();
+
+    res.status(200).json({
+      message: "Deposit verified and balance updated ✅",
+      newBalance: user.balance
+    });
+  } catch (err) {
+    console.error("verifyCryptoDeposit error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
-
-  const deposit = pendingDeposits[index];
-  const user = await User.findById(userId);
-
-  if (!user) {
-    return res.status(404).json({ message: "User not found." });
-  }
-
-  user.balance += parseFloat(deposit.amount);
-  user.totalDeposited += parseFloat(deposit.amount);
-  await user.save();
-
-  pendingDeposits.splice(index, 1);
-
-  res.status(200).json({
-    message: "Deposit verified and balance updated.",
-    newBalance: user.balance
-  });
 };
+
 
 // ========================= WITHDRAW =========================
 export const withdrawFunds = async (req, res) => {

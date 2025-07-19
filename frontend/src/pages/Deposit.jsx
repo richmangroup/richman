@@ -16,32 +16,39 @@ function Deposit() {
   const [coin, setCoin] = useState('usdt');
   const [txId, setTxId] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        'http://localhost:5000/api/users/submit-crypto-deposit',
-        { amount: parseFloat(amount), coin, txId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  try {
+    const token = localStorage.getItem('token');
 
-      alert('✅ Deposit submitted! Waiting for confirmation...');
-      navigate('/home');
-    } catch (err) {
-      alert('❌ Submission failed: ' + (err.response?.data?.message || err.message));
-    }
-  };
+    await axios.post(
+      'http://localhost:5000/api/users/submit-crypto-deposit',
+      { amount: parseFloat(amount), coin, txId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // ✅ Fetch updated user info after deposit
+    const userRes = await axios.get('http://localhost:5000/api/users/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    localStorage.setItem("user", JSON.stringify(userRes.data)); // save updated user
+
+    alert('✅ Deposit submitted! Balance updated.');
+    navigate('/home', { state: { depositSuccess: true } });
+  } catch (err) {
+    alert('❌ Submission failed: ' + (err.response?.data?.message || err.message));
+  }
+};
+
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden text-white">
       <motion.form
         onSubmit={handleSubmit}
         className="relative z-10 p-10 w-full max-w-md rounded-3xl 
-          bg-black/40 backdrop-blur-2xl 
-          border border-pink-300 shadow-[0_0_20px_#ff99cc]/30
-          transition duration-500 text-center"
+          bg-black/40 backdrop-blur-2xl border border-pink-300 
+          shadow-[0_0_20px_#ff99cc]/30 transition duration-500 text-center"
         initial={{ scale: 1 }}
         animate={{ y: [0, -5, 0] }}
         transition={{ repeat: Infinity, duration: 4 }}
@@ -64,7 +71,7 @@ function Deposit() {
           Crypto Deposit
         </h2>
 
-        {/* Coin selection */}
+        {/* Coin Selection */}
         <select
           value={coin}
           onChange={(e) => setCoin(e.target.value)}
@@ -76,7 +83,7 @@ function Deposit() {
           <option value="btc">BTC</option>
         </select>
 
-        {/* Show wallet address */}
+        {/* Wallet Address */}
         <div className="text-sm mb-4 text-white/80">
           <span className="block">Send crypto to the address below:</span>
           <span className="break-all text-pink-300 mt-2 inline-block font-mono">

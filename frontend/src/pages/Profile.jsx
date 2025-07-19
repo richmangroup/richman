@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Particles from 'react-tsparticles';
-import { FaArrowLeft, FaUserCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaUserCircle, FaCamera } from 'react-icons/fa';
+import { motion } from 'framer-motion';
 
 function Profile() {
   const navigate = useNavigate();
@@ -13,7 +14,6 @@ function Profile() {
   const [usernameStatus, setUsernameStatus] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
-
   const clickSound = useRef(null);
 
   useEffect(() => {
@@ -32,10 +32,7 @@ function Profile() {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/');
-          return;
-        }
+        if (!token) return navigate('/');
         const res = await axios.get('http://localhost:5000/api/users/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -55,7 +52,7 @@ function Profile() {
     setUsernameStatus('Updating...');
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.patch(
+      await axios.patch(
         'http://localhost:5000/api/users/update-username',
         { username: newUsername },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -68,17 +65,13 @@ function Profile() {
   };
 
   const handleProfilePicUpload = async () => {
-    if (!selectedFile) {
-      setUploadStatus('Please select a file.');
-      return;
-    }
+    if (!selectedFile) return setUploadStatus('Please select a file.');
     playClickSound();
     setUploadStatus('Uploading...');
     try {
       const token = localStorage.getItem('token');
       const formData = new FormData();
       formData.append('profilePic', selectedFile);
-
       const res = await axios.post(
         'http://localhost:5000/api/users/upload-profile-pic',
         formData,
@@ -95,7 +88,6 @@ function Profile() {
       setUploadStatus('❌ Failed to upload picture.');
     }
   };
-
   const handleResetPassword = async (e) => {
     e.preventDefault();
     playClickSound();
@@ -111,121 +103,142 @@ function Profile() {
   };
 
   if (!user) {
-    return <div className="h-screen flex items-center justify-center bg-black text-white">Loading...</div>;
+    return (
+      <div className="h-screen flex items-center justify-center bg-black text-white text-xl">
+        Loading...
+      </div>
+    );
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-black px-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-tr from-[#0f0c29] via-[#302b63] to-[#24243e] px-4 overflow-hidden">
       <Particles
         options={{
           fullScreen: { enable: false },
-          fpsLimit: 60,
-          interactivity: {
-            events: { onHover: { enable: false }, resize: true },
-          },
           particles: {
             number: { value: 50, density: { enable: true, area: 800 } },
-            color: { value: ['#ff99cc', '#99ccff', '#ffffff'] },
+            color: { value: ['#00ffe7', '#ff00ff'] },
             links: {
               enable: true,
-              distance: 120,
+              distance: 130,
               color: '#ffffff',
-              opacity: 0.15,
+              opacity: 0.1,
               width: 1,
             },
-            move: { enable: true, speed: 0.3, random: true },
+            move: { enable: true, speed: 0.4, random: true },
             opacity: { value: 0.3, random: true },
             shape: { type: 'circle' },
-            size: { value: { min: 0.8, max: 2 } },
+            size: { value: { min: 1, max: 3 } },
           },
-          detectRetina: true,
         }}
         className="absolute inset-0 z-0"
       />
 
-      <div className="relative z-10 p-10 w-full max-w-md rounded-3xl bg-black/40 backdrop-blur-2xl border border-pink-300 text-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 w-full max-w-5xl bg-black/40 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl p-6 grid md:grid-cols-2 gap-6 text-white"
+      >
+        {/* Back Button */}
         <button
           onClick={() => {
             playClickSound();
             navigate('/home');
           }}
-          className="absolute top-4 left-4 text-pink-300 hover:text-pink-100 transition"
+          className="absolute top-4 left-4 text-white hover:text-pink-300 transition"
         >
-          <FaArrowLeft size={24} />
+          <FaArrowLeft size={22} />
         </button>
 
-        <div className="mb-4">
-          {user.profilePic ? (
-            <img
-              src={user.profilePic}
-              alt="Profile"
-              className="mx-auto rounded-full w-24 h-24 object-cover border-2 border-pink-300"
-            />
-          ) : (
-            <FaUserCircle className="text-pink-300 mx-auto" size={80} />
-          )}
-        </div>
-
-        <h2 className="text-4xl font-bold text-pink-300 mb-6">Profile</h2>
-        <p className="mb-3"><strong>Username:</strong> {user.username}</p>
-        <p className="mb-3"><strong>Email:</strong> {user.email}</p>
-        <p className="mb-6"><strong>Balance:</strong> ${user.balance}</p>
-
-        <div className="mb-6">
-          <input
-            type="text"
-            value={newUsername}
-            onChange={(e) => setNewUsername(e.target.value)}
-            placeholder="New username"
-            className="mb-3 px-3 py-2 rounded w-full text-pink-100 bg-black/40 border border-pink-300 focus:outline-none"
-          />
-          <button
-            onClick={handleUsernameUpdate}
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold"
-          >
-            Update Username
-          </button>
-          {usernameStatus && <p className="mt-2 text-sm text-pink-200">{usernameStatus}</p>}
-        </div>
-
-        <div className="mb-6">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setSelectedFile(e.target.files[0])}
-            className="mb-3 text-pink-200"
-          />
+        {/* Profile Info Card */}
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="relative group">
+            {user.profilePic ? (
+              <img
+                src={user.profilePic}
+                alt="Profile"
+                className="w-36 h-36 object-cover rounded-full border-4 border-pink-500 shadow-lg"
+              />
+            ) : (
+              <FaUserCircle className="text-pink-300" size={120} />
+            )}
+            <label className="absolute bottom-2 right-2 bg-pink-600 p-2 rounded-full cursor-pointer hover:scale-105 transition-transform">
+              <FaCamera />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+                className="hidden"
+              />
+            </label>
+          </div>
           <button
             onClick={handleProfilePicUpload}
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 text-white font-bold"
+            className="px-4 py-2 bg-pink-500 hover:bg-pink-400 transition rounded-lg text-sm font-semibold"
           >
             Upload Picture
           </button>
-          {uploadStatus && <p className="mt-2 text-sm text-pink-200">{uploadStatus}</p>}
+          {uploadStatus && (
+            <p className="text-sm text-pink-200">{uploadStatus}</p>
+          )}
+
+          <div className="text-lg">
+            <p><strong>Username:</strong> {user.username}</p>
+            <p><strong>Email:</strong> {user.email}</p>
+            <p><strong>Balance:</strong> ${user.balance}</p>
+          </div>
         </div>
 
-        <hr className="border-pink-300 mb-6" />
+        {/* Actions Form Card */}
+        <div className="space-y-8">
+          {/* Username */}
+          <div>
+            <label className="block mb-2 text-pink-200 font-semibold">Change Username</label>
+            <input
+              type="text"
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+              placeholder="New username"
+              className="w-full px-4 py-2 rounded-lg bg-black/30 border border-pink-300 focus:outline-none text-white"
+            />
+            <button
+              onClick={handleUsernameUpdate}
+              className="w-full mt-3 py-2 rounded-lg bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold hover:scale-105 transition-transform"
+            >
+              Update Username
+            </button>
+            {usernameStatus && (
+              <p className="mt-2 text-sm text-pink-200">{usernameStatus}</p>
+            )}
+          </div>
 
-        <h3 className="text-xl font-semibold text-pink-200 mb-4">Reset Password</h3>
-        <form onSubmit={handleResetPassword} className="flex flex-col items-center">
-          <input
-            type="email"
-            value={resetEmail}
-            onChange={(e) => setResetEmail(e.target.value)}
-            placeholder="Enter your email"
-            required
-            className="mb-4 px-3 py-2 rounded w-full text-pink-100 bg-black/40 border border-pink-300 focus:outline-none"
-          />
-          <button
-            type="submit"
-            onClick={playClickSound}
-            className="w-full py-3 rounded-lg bg-gradient-to-r from-red-400 to-pink-500 text-white font-bold"
-          >
-            Send Reset Link
-          </button>
-        </form>
-        {resetStatus && <p className="mt-4 text-sm text-pink-200">{resetStatus}</p>}
-      </div>
+          {/* Password Reset */}
+          <div>
+            <label className="block mb-2 text-pink-200 font-semibold">Reset Password</label>
+            <form onSubmit={handleResetPassword} className="space-y-3">
+              <input
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="Your email"
+                required
+                className="w-full px-4 py-2 rounded-lg bg-black/30 border border-pink-300 focus:outline-none text-white"
+              />
+              <button
+                type="submit"
+                onClick={playClickSound}
+                className="w-full py-2 rounded-lg bg-gradient-to-r from-red-400 to-pink-500 text-white font-bold hover:scale-105 transition-transform"
+              >
+                Send Reset Link
+              </button>
+              {resetStatus && (
+                <p className="text-sm text-pink-200">{resetStatus}</p>
+              )}
+            </form>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
