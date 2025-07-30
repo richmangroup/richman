@@ -16,8 +16,6 @@ import AdminPanel from './pages/AdminPanel';
 import CrashGame from './components/CrashGame';
 import AdminVideos from "./pages/AdminVideos";
 
-
-
 function App() {
   const [balance, setBalance] = useState(0);
 
@@ -28,7 +26,8 @@ function App() {
       if (!token) return;
 
       try {
-        const res = await fetch('/api/user/me', {
+        // ✅ Backend ka URL REACT_APP_API_URL se lena
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/user/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -44,7 +43,6 @@ function App() {
   const updateBalance = (amount) => {
     setBalance((prev) => parseFloat((prev + amount).toFixed(2)));
   };
-
   return (
     <>
       <Routes>
@@ -63,10 +61,8 @@ function App() {
         />
         <Route
           path="/admin/videos"
-          element={
-          <AdminVideos />
-          } 
-          />
+          element={<AdminVideos />}
+        />
         <Route
           path="/promo"
           element={
@@ -92,17 +88,18 @@ function App() {
           }
         />
         <Route
-  path="/crash-game"
-  element={
-    <ProtectedRoute>
-      <CrashGame
-        balance={balance}
-        updateBalance={(amount) => setBalance(prev => parseFloat((prev + amount).toFixed(2)))}
-      />
-    </ProtectedRoute>
-  }
-/>
-
+          path="/crash-game"
+          element={
+            <ProtectedRoute>
+              <CrashGame
+                balance={balance}
+                updateBalance={(amount) =>
+                  setBalance((prev) => parseFloat((prev + amount).toFixed(2)))
+                }
+              />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/withdraw"
           element={
@@ -127,7 +124,6 @@ function App() {
             </AdminRoute>
           }
         />
-
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/about" element={<About />} />
       </Routes>
