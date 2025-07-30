@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "/static/css/main.a30b0827.css",
+    "main.js": "/static/js/main.3062a301.js",
+    "static/media/login-bg.jpg": "/static/media/login-bg.8dfcc8814b42881ba171.jpg",
+    "static/media/afa-logo.png": "/static/media/afa-logo.c70ef6051879df6ea1f0.png",
+    "static/media/owners-group.png": "/static/media/owners-group.ebbdb20fa10b1602ceb1.png",
+    "static/media/third-logo.png": "/static/media/third-logo.db52e1b41c1053170db7.png",
+    "static/media/blockchain-logo.png": "/static/media/blockchain-logo.bf4e23e7285cd85628ea.png",
+    "static/media/home-bg.jpg": "/static/media/home-bg.38cdd5cd507a2460a26f.jpg",
+    "index.html": "/index.html",
+    "main.a30b0827.css.map": "/static/css/main.a30b0827.css.map",
+    "main.3062a301.js.map": "/static/js/main.3062a301.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a30b0827.css",
+    "static/js/main.3062a301.js"
+  ]
+}
